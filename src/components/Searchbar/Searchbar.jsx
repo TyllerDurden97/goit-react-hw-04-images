@@ -1,37 +1,34 @@
-import React, { Component } from "react";
+import  {React, useState } from "react";
 import PropTypes from 'prop-types';
 import Notiflix from 'notiflix';
 import { GoSearch } from "react-icons/go";
 import css from 'components/Searchbar/Searchbar.module.css'
 
 
-export class Searchbar extends Component {
-   state = {
-   searchRequest:'',
-};
+export const Searchbar = ({formSubmit}) => {
 
-   handleInputChange = event => {
-      this.setState({ searchRequest: event.currentTarget.value.toLowerCase() });
+   const [searchRequest, setSearchRequest] = useState('');
+
+   const handleInputChange = event => {
+     setSearchRequest(event.currentTarget.value.toLowerCase());
    };
    
-   handleSubmitSearch = event => {
+   const handleSubmitSearch = event => {
       event.preventDefault();
-      if (this.state.searchRequest.trim() === '') {
+      if (searchRequest.trim() === '') {
          Notiflix.Notify.info("Please type search request".toUpperCase());
          return;
       };
-      this.setState({ searchRequest:''});
-      this.props.formSubmit(this.state.searchRequest);
+      setSearchRequest('');
+      formSubmit(searchRequest);
       event.target.elements.input.value = '';
-
-}
+   };
    
-   render() {
-      return (
-   <header className={css.searchbar}>
+    return (
+      <header className={css.searchbar}>
       <form
          className={css.searchForm}
-         onSubmit={this.handleSubmitSearch}       
+         onSubmit={handleSubmitSearch}       
       >
          <button
             type="submit"
@@ -51,12 +48,11 @@ export class Searchbar extends Component {
             autoComplete="off"
             autoFocus
             placeholder="Search images and photos"
-            onChange={this.handleInputChange}            
+            onChange={handleInputChange}            
          />
       </form>
-   </header>   
-      )
-   };     
+      </header>   
+   )
 };
 
  Searchbar.propTypes = {

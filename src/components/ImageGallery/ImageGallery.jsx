@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { React, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Notiflix from 'notiflix';
 import { fetchAPI } from '../../services/fetchAPI';
@@ -7,48 +7,44 @@ import { Loader } from 'components/Loader/Loader';
 import {ImageGalleryItem} from 'components/ImageGalleryItem/ImageGalleryItem'
 import css from 'components/ImageGallery/ImageGallery.module.css';
 
-export class ImageGallery extends Component {
-   state = {
-      receivedData: [],
-      error: null,
-      status: 'idle',
-      page: 1,
+export const ImageGallery = ({ searchRequest }) => {
 
-   }
+   const [receivedData, setReceivedData] = useState([]);
+   const [error, setError] = useState(null);
+   const [status, setStatus] = useState('idle');
+   const [page, setPage] = useState(1);
 
-   componentDidUpdate(prevProps, prevState) {
-      const prevSearchRequest = prevProps.searchRequest;
-      const nextSearchRequest = this.props.searchRequest;
-      const { page } = this.state;
-
-      if (nextSearchRequest !== prevSearchRequest || prevState.page !== page) {
-         this.setState({ status: 'pending' });
-         fetchAPI.fetchPixabay(nextSearchRequest, page)
-            .then(resp => {
-               if (resp.total === 0) {
-                   this.setState({status: 'idle' });
-                   Notiflix.Notify.info(`No images for ${nextSearchRequest}`.toUpperCase());
-               } else {this.setState((prevState) => ({
-                  receivedData: [...prevState.receivedData, ...resp.hits],
-                  status: 'resolved'
-               }))
-               };
-               })
-               .catch(error => this.setState({ error, status: 'rejected' }))
+   useEffect(() => {
+      if (searchRequest) {
+         setStatus('pending');
+         fetchAPI.fetchPixabay(searchRequest, page)
+         .then(resp => {
+            if (resp.total === 0) {
+               setStatus('idle');
+               Notiflix.Notify.info(`No images for ${searchRequest}`.toUpperCase());
+            } else {
+               setReceivedData(prev => 
+                  [...prev, ...resp.hits]);
+                  setStatus('resolved');              
+            };
+         })
+         .catch(error => {
+            setError(error);
+            setStatus('rejected');
+         })
       }
-      if (nextSearchRequest !== prevSearchRequest) {
-          this.setState({ receivedData: [], page: 1 });
-      }
-     }
+      }, [searchRequest, page]);
+   
+   useEffect(() => {
+      setReceivedData([]);
+      setPage(1);
+   }, [searchRequest]);
 
-    hadleBtnLoadMore = (event) => {
-       this.setState(prevState => ({ page: prevState.page + 1 }));
-   }  
+   const hadleBtnLoadMore = () => {
+            setPage(prev => (prev + 1 ));
+   };  
 
-   render() {
-      const { receivedData, error, status } = this.state;
-
-      return (<>
+   return (<>
          {status === 'idle' && <div className={css.imageGalleryIdle}>Please type search request</div> }
          {status === 'pending' && <Loader/> }
          {status === 'rejected' && console.log(error.message)}
@@ -59,15 +55,14 @@ export class ImageGallery extends Component {
                   <ImageGalleryItem key={id} webformatURL={webformatURL} largeImageURL={largeImageURL} tags={tags} />
                ))}
             </ul>
-            {receivedData.length >= 12 && <Button onClick={this.hadleBtnLoadMore} />}
+            {receivedData.length >= 12 && <Button onClick={hadleBtnLoadMore} />}
              </>
          }
       </>
       );  
-   };
 };
 
 
 ImageGallery.propTypes = {
-       searchRequest: PropTypes.string.isRequired,
-}
+   searchRequest: PropTypes.string.isRequired,
+};
